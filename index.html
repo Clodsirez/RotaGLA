@@ -310,20 +310,56 @@
    ===========  ÁREA DE EDIÇÃO — só mexa aqui  ====================
    =================================================================
 
-   1) CORES DISPONÍVEIS (bata o nome certinho, minúsculo):
-        "green"  -> semana atual
-        "yellow" -> até 1 mês
-        "orange" -> 1 a 2 meses
-        "red"    -> mais de 2 meses
-        "blue"   -> sem rotação (item fixo)
-        "purple" -> ainda não rotacionou
+   NOVIDADE: o sistema agora tem um CALENDÁRIO PRÓPRIO. A cor de cada
+   personagem (verde/amarelo/laranja/vermelho) NÃO é mais escolhida
+   manualmente — ela é calculada sozinha, todo dia, comparando a data
+   de rotação do personagem com a data "de hoje" do sistema. Você só
+   precisa manter o campo "date" atualizado quando o personagem rodar
+   de novo. O campo "color" antigo continua existindo no array, mas
+   agora só é usado para os dois casos especiais que não dependem de
+   data (veja o item 1).
 
-   2) IMAGEM: campo "img" é opcional. Cole o link direto da imagem
+   1) COMO FUNCIONA A COR AGORA (100% AUTOMÁTICO):
+        - O Baú reseta toda SEXTA-FEIRA (ver WEEK_RESET_DAY logo
+          abaixo, caso isso mude no futuro). Quem está na lista
+          CURRENT_WEEK fica VERDE automaticamente, com a data da
+          última sexta-feira — não importa em que dia da semana você
+          realmente editou o código.
+        - Quando você TIRA alguém da lista CURRENT_WEEK, o sistema já
+          guarda sozinho (no navegador) a data em que isso aconteceu.
+          Você NÃO precisa mais editar o campo "date" na mão. A partir
+          daí a cor dele muda sozinha conforme os dias passam:
+            8 a 30 dias  -> amarelo (até 1 mês)
+            31 a 60 dias -> laranja (1 a 2 meses)
+            61+ dias     -> vermelho (mais de 2 meses)
+        - Casos manuais (não calculados, defina "color" no personagem):
+            color:"blue"   -> item fixo / sem rotação
+            color:"purple" -> ainda não rotacionou (ou deixe "date":"")
+
+      RESUMO: toda semana, edite SÓ a lista CURRENT_WEEK (e NEXT_WEEK
+      se quiser planejar). Não precisa mais tocar em "date" de
+      ninguém — o sistema lembra sozinho.
+
+      LIMITAÇÃO HONESTA: essa "memória" fica guardada no navegador de
+      quem acessa a página (localStorage), não em um servidor. Se
+      você sempre editar/conferir pelo mesmo computador, funciona
+      100% sozinho. Se quiser que fique idêntico para qualquer
+      visitante em qualquer aparelho, é necessário um backend/banco
+      de dados de verdade — nesse caso é só pedir para evoluirmos o
+      sistema.
+
+   2) CALENDÁRIO DO SISTEMA (data de "hoje"):
+      Logo abaixo tem SYSTEM_DATE_OVERRIDE. Deixe "" (vazio) para o
+      sistema usar a data real do dia automaticamente (recomendado).
+      Se quiser testar como o site ficará em uma data futura/passada,
+      preencha no formato "DD/MM/AAAA", ex: "20/08/2026".
+
+   3) IMAGEM: campo "img" é opcional. Cole o link direto da imagem
       (ex: "https://meusite.com/imagens/zoro.png").
       Se deixar "" ou remover o campo, mostra as iniciais do nome
       como no exemplo (bolinha com "ZO", "LU" etc).
 
-   3) SEMANA ATUAL / PRÓXIMA SEMANA: são as listas CURRENT_WEEK e
+   4) SEMANA ATUAL / PRÓXIMA SEMANA: são as listas CURRENT_WEEK e
       NEXT_WEEK logo abaixo. Cada uma tem exatamente 6 NOMES (texto
       simples), na ordem Baú 1 (3 primeiros) e Baú 2 (3 últimos).
       A imagem de cada um é buscada automaticamente na lista
@@ -331,13 +367,19 @@
       Importante: o nome tem que ser IDÊNTICO ao usado lá embaixo
       em CHARACTERS (maiúsculas/minúsculas incluso).
 
-   4) LISTA COMPLETA: array CHARACTERS, um objeto por personagem:
+   5) LISTA COMPLETA: array CHARACTERS, um objeto por personagem:
         name  -> nome exibido
         role  -> "Tank" | "Bruiser" | "DPS" | "Support"
-        date  -> texto livre exibido no card, ex: "15/05"
-        color -> uma das cores da lista acima
+        date  -> data da última rotação, formato "DD/MM", ex: "15/05"
+        color -> deixe como está para cálculo automático; use "blue"
+                 ou "purple" apenas para os casos especiais do item 1
         img   -> (opcional) link da imagem
 ================================================================= */
+
+// ---------- CALENDÁRIO DO SISTEMA ----------
+// Deixe "" para usar a data real de hoje automaticamente.
+// Preencha "DD/MM/AAAA" só se quiser forçar/testar outra data.
+const SYSTEM_DATE_OVERRIDE = "";
 
 // ---------- SEMANA ATUAL (6 nomes = Baú 1 + Baú 2) ----------
 // Só troque os nomes aqui. A imagem é puxada automaticamente
@@ -405,6 +447,145 @@ const CHARACTERS = [
 /* =================================================================
    =============  FIM DA ÁREA DE EDIÇÃO  ===========================
    ================================================================= */
+
+// =================================================================
+// ===============  CALENDÁRIO DO SISTEMA (automático)  ============
+// =================================================================
+
+// "Hoje", segundo o sistema: usa SYSTEM_DATE_OVERRIDE se preenchido,
+// senão usa a data real do dispositivo/servidor no momento em que a
+// página é carregada.
+function getSystemToday(){
+  if(SYSTEM_DATE_OVERRIDE && SYSTEM_DATE_OVERRIDE.trim() !== ""){
+    const [dd, mm, yyyy] = SYSTEM_DATE_OVERRIDE.split("/").map(Number);
+    const d = new Date(yyyy, (mm||1)-1, dd||1);
+    if(!isNaN(d.getTime())) return d;
+  }
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+const SYSTEM_TODAY = getSystemToday();
+
+// Dia da semana em que o Baú reseta. 0=domingo, 1=segunda, ... 5=sexta, 6=sábado.
+const WEEK_RESET_DAY = 5; // sexta-feira
+
+// Retorna a data da última sexta-feira (ou a própria data, se hoje já
+// for sexta). É essa data — e não o dia exato em que você mexeu no
+// código — que representa "quando a rotação atual começou".
+function getLastResetDate(d){
+  const weekday = d.getDay();
+  const diff = (weekday - WEEK_RESET_DAY + 7) % 7;
+  const result = new Date(d);
+  result.setDate(d.getDate() - diff);
+  return result;
+}
+
+const CURRENT_ROTATION_DATE = getLastResetDate(SYSTEM_TODAY);
+
+// Nomes que estão na rotação desta semana (usado para forçar a cor
+// verde automaticamente, sem precisar editar o campo "date").
+const CURRENT_WEEK_SET = new Set(CURRENT_WEEK);
+
+// Formata a data de hoje como "DD/MM" para exibir no card de quem
+// está na rotação atual (mesmo que o campo "date" salvo esteja
+// desatualizado).
+function formatDDMM(d){
+  const dd = String(d.getDate()).padStart(2,"0");
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  return `${dd}/${mm}`;
+}
+
+// =================================================================
+// =====  MEMÓRIA AUTOMÁTICA DE ROTAÇÃO (100% sem digitar "date") ==
+// =================================================================
+// Toda vez que a página carrega, o sistema guarda no navegador
+// (localStorage) a data em que cada personagem foi visto na lista
+// CURRENT_WEEK. Assim, quando você tira alguém dessa lista, o
+// sistema já sabe automaticamente "ele saiu no dia X" — sem você
+// precisar editar o campo "date" na mão.
+//
+// Observação: essa memória fica salva no navegador de quem acessa a
+// página. Se você sempre editar/conferir pelo mesmo computador, tudo
+// funciona 100% sozinho. Se quiser que funcione igual para qualquer
+// visitante em qualquer aparelho, isso exigiria um banco de dados
+// real (servidor) — me avise se quiser evoluir para isso também.
+const STORAGE_KEY_LOG = "bauSemanal_rotationLog_v1";
+
+function loadRotationLog(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY_LOG);
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){ return {}; }
+}
+
+function saveRotationLog(log){
+  try{ localStorage.setItem(STORAGE_KEY_LOG, JSON.stringify(log)); }catch(e){}
+}
+
+// Atualiza o log: todo nome presente em CURRENT_WEEK hoje recebe a
+// data de hoje como "última vez visto na rotação". Quem sai da lista
+// simplesmente para de ser atualizado, então fica congelado na
+// última data em que esteve lá — exatamente o que precisamos para
+// contar os dias corretamente.
+function updateRotationLog(){
+  const log = loadRotationLog();
+  const resetStr = formatDDMM(CURRENT_ROTATION_DATE);
+  CURRENT_WEEK.forEach(name=>{
+    log[name] = resetStr;
+  });
+  saveRotationLog(log);
+  return log;
+}
+
+const ROTATION_LOG = updateRotationLog();
+
+// Data "efetiva" de um personagem: usa o log automático se existir,
+// senão cai para o campo "date" digitado manualmente no CHARACTERS
+// (isso cobre o primeiro carregamento, antes de existir histórico).
+function getEffectiveDate(c){
+  return ROTATION_LOG[c.name] || c.date;
+}
+
+// Converte "DD/MM" em Date, assumindo o ano mais próximo de hoje.
+// Se a data cair mais de ~6 meses no futuro em relação a hoje,
+// assume que é do ano anterior (evita erro na virada do ano).
+function parseRotationDate(dateStr, todayDate){
+  if(!dateStr) return null;
+  const parts = dateStr.split("/").map(Number);
+  const dd = parts[0], mm = parts[1];
+  if(!dd || !mm) return null;
+  let year = todayDate.getFullYear();
+  let d = new Date(year, mm - 1, dd);
+  const diffDays = Math.round((todayDate - d) / 86400000);
+  if(diffDays < -183){
+    d = new Date(year - 1, mm - 1, dd);
+  }
+  return d;
+}
+
+function daysSinceRotation(dateStr, todayDate){
+  const d = parseRotationDate(dateStr, todayDate);
+  if(!d) return null;
+  return Math.floor((todayDate - d) / 86400000);
+}
+
+// Calcula a cor automaticamente. "blue" e "purple" continuam manuais
+// pois representam estados que não têm relação com contagem de dias.
+function getAutoColor(c, todayDate){
+  if(CURRENT_WEEK_SET.has(c.name)) return "green"; // está na rotação desta semana
+  if(c.color === "blue") return "blue";
+  const effDate = getEffectiveDate(c);
+  if(!effDate || c.color === "purple") return "purple";
+
+  const days = daysSinceRotation(effDate, todayDate);
+  if(days === null) return "purple";
+  if(days < 0) return "green";      // data agendada para o futuro (rotação já definida)
+  if(days <= 7) return "green";     // semana atual
+  if(days <= 30) return "yellow";   // até 1 mês
+  if(days <= 60) return "orange";   // 1 a 2 meses
+  return "red";                     // mais de 2 meses
+}
 
 function initials(name){
   return name.split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase();
@@ -475,18 +656,18 @@ searchInput.addEventListener("input", renderGrid);
 sortSelect.addEventListener("change", renderGrid);
 hideNone.addEventListener("change", renderGrid);
 
-// helper pra ordenar por data no formato "DD/MM" (ano assumido fixo p/ ordenação)
+// helper pra ordenar por data no formato "DD/MM", usando o mesmo
+// calendário do sistema (SYSTEM_TODAY) para resolver o ano corretamente
 function parseDMY(d){
-  if(!d) return new Date(0);
-  const [dd, mm] = d.split("/").map(Number);
-  return new Date(2000, (mm||1)-1, dd||1);
+  const parsed = parseRotationDate(d, SYSTEM_TODAY);
+  return parsed || new Date(0);
 }
 
 function renderGrid(){
   let list = [...CHARACTERS];
 
   if(hideNone.checked){
-    list = list.filter(c=>c.color !== "blue");
+    list = list.filter(c => getAutoColor(c, SYSTEM_TODAY) !== "blue");
   }
 
   const q = searchInput.value.trim().toLowerCase();
@@ -502,8 +683,8 @@ function renderGrid(){
   list.sort((a,b)=>{
     if(sortVal === "name-asc") return a.name.localeCompare(b.name);
     if(sortVal === "name-desc") return b.name.localeCompare(a.name);
-    if(sortVal === "date-asc") return parseDMY(a.date) - parseDMY(b.date);
-    if(sortVal === "date-desc") return parseDMY(b.date) - parseDMY(a.date);
+    if(sortVal === "date-asc") return parseDMY(getEffectiveDate(a)) - parseDMY(getEffectiveDate(b));
+    if(sortVal === "date-desc") return parseDMY(getEffectiveDate(b)) - parseDMY(getEffectiveDate(a));
     return 0;
   });
 
@@ -514,10 +695,13 @@ function renderGrid(){
   }
 
   list.forEach(c=>{
-    const color = c.color || "red";
+    const color = getAutoColor(c, SYSTEM_TODAY);
     const card = document.createElement("div");
     card.className = `card status-${color}`;
-    const dateLabel = color === "blue" ? "Fixo" : (color === "purple" ? "—" : (c.date || "—"));
+    const dateLabel = color === "blue" ? "Fixo"
+      : color === "purple" ? "—"
+      : CURRENT_WEEK_SET.has(c.name) ? formatDDMM(CURRENT_ROTATION_DATE)
+      : (getEffectiveDate(c) || "—");
     card.innerHTML = `
       <div class="img">${avatarHTML(c)}</div>
       <div class="date-bar">${dateLabel}</div>
