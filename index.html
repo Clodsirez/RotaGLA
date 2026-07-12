@@ -250,7 +250,7 @@
 <div class="frame">
   <header>
     <h1>Baú Semanal</h1>
-    <div class="credit">Créditos a Atiosz pela ideia</div>
+    <div class="credit">Créditos a Atiosz pela ideia e Labophase pelo Design</div>
   </header>
 
   <div class="legend">
@@ -324,10 +324,12 @@
       como no exemplo (bolinha com "ZO", "LU" etc).
 
    3) SEMANA ATUAL / PRÓXIMA SEMANA: são as listas CURRENT_WEEK e
-      NEXT_WEEK logo abaixo. Cada uma tem exatamente 6 nomes,
-      divididos automaticamente em Baú 1 (3 primeiros) e
-      Baú 2 (3 últimos). Só troque os nomes/imagens ali, na ordem
-      que quiser.
+      NEXT_WEEK logo abaixo. Cada uma tem exatamente 6 NOMES (texto
+      simples), na ordem Baú 1 (3 primeiros) e Baú 2 (3 últimos).
+      A imagem de cada um é buscada automaticamente na lista
+      CHARACTERS pelo nome — não precisa colar link de novo.
+      Importante: o nome tem que ser IDÊNTICO ao usado lá embaixo
+      em CHARACTERS (maiúsculas/minúsculas incluso).
 
    4) LISTA COMPLETA: array CHARACTERS, um objeto por personagem:
         name  -> nome exibido
@@ -338,78 +340,66 @@
 ================================================================= */
 
 // ---------- SEMANA ATUAL (6 nomes = Baú 1 + Baú 2) ----------
-const CURRENT_WEEK = [
-  {name:"Bastille", img:"https://www.spriters-resource.com/media/asset_icons/512/530321.png?updated=1773340264"},
-  {name:"Kaku",     img:"https://www.spriters-resource.com/media/asset_icons/260/262873.png?updated=1769135984"},
-  {name:"Lucci",    img:"https://www.spriters-resource.com/media/asset_icons/260/262749.png?updated=1768088946"},
-  {name:"Luffy",    img:"https://www.spriters-resource.com/media/asset_icons/75/78610.png?updated=1765925909"},
-  {name:"Moria",    img:"https://www.spriters-resource.com/media/asset_icons/213/216597.png?updated=1767395869"},
-  {name:"Zoro",     img:"https://www.spriters-resource.com/media/asset_icons/75/78625.png?updated=1765937815"},
-];
+// Só troque os nomes aqui. A imagem é puxada automaticamente
+// da lista CHARACTERS lá embaixo, pelo nome.
+const CURRENT_WEEK = ["Franky", "Lucci", "Smoker", "Kalifa", "Kid", "Moria"];
 
 // ---------- PRÓXIMA SEMANA (6 nomes = Baú 1 + Baú 2) ----------
-const NEXT_WEEK = [
-  {name:"Killer",  img:"https://www.spriters-resource.com/media/asset_icons/213/216162.png?updated=1766999962"},
-  {name:"Brook",   img:"https://www.spriters-resource.com/media/asset_icons/260/263061.png?updated=1769741652"},
-  {name:"Bellamy", img:"https://www.spriters-resource.com/media/asset_icons/213/216612.png?updated=1767465324"},
-  {name:"Urouge",  img:"https://www.spriters-resource.com/media/asset_icons/76/78661.png?updated=1767000631"},
-  {name:"Sanji",   img:"https://www.spriters-resource.com/media/asset_icons/216/219362.png?updated=1766021040"},
-  {name:"Franky",  img:"https://www.spriters-resource.com/media/asset_icons/260/263134.png?updated=1769815824"},
-];
+const NEXT_WEEK = ["Franky", "Lucci", "Smoker", "Kalifa", "Kid", "Moria"];
 
 // ---------- LISTA COMPLETA DE PERSONAGENS ----------
 const CHARACTERS = [
-  {name:"Apoo",          role:"Support", date:"17/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/493/513822.png?updated=1769657444"},
-  {name:"Baby 5",        role:"DPS",     date:"27/03", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/275/278302.png?updated=1755495673"},
-  {name:"Bartolomeo",    role:"DPS",     date:"10/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/461/478728.png?updated=1757657212"},
-  {name:"Basil Hawkins", role:"Bruiser", date:"13/03", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/213/216159.png?updated=1766999291"},
+  {name:"Apoo",          role:"Support", date:"29/05", color:"orange",    img:"https://www.spriters-resource.com/media/asset_icons/493/513822.png?updated=1769657444"},
+  {name:"Baby 5",        role:"DPS",     date:"19/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/275/278302.png?updated=1755495673"},
+  {name:"Bartolomeo",    role:"DPS",     date:"03/07", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/461/478728.png?updated=1757657212"},
+  {name:"Basil Hawkins", role:"Bruiser", date:"12/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/213/216159.png?updated=1766999291"},
   {name:"Bastille",      role:"Tank",    date:"15/05", color:"green",  img:"https://www.spriters-resource.com/media/asset_icons/512/530321.png?updated=1773340264"},
   {name:"Bellamy",       role:"DPS",     date:"22/05", color:"orange", img:"https://www.spriters-resource.com/media/asset_icons/213/216612.png?updated=1767465324"},
-  {name:"Blueno",        role:"DPS",     date:"24/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/260/262879.png?updated=1769278929"},
-  {name:"Bonney",        role:"Support", date:"20/03", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/259/262045.png?updated=1755494355"},
+  {name:"Blueno",        role:"DPS",     date:"05/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/260/262879.png?updated=1769278929"},
+  {name:"Bonney",        role:"Support", date:"19/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/259/262045.png?updated=1755494355"},
   {name:"Brook",         role:"Support", date:"22/05", color:"orange", img:"https://www.spriters-resource.com/media/asset_icons/260/263061.png?updated=1769741652"},
   {name:"Burgess",       role:"Tank",    date:"22/05", color:"orange", img:"https://www.spriters-resource.com/media/asset_icons/263/266104.png?updated=1773554062"},
 
-  {name:"Capone Bege",   role:"DPS",     date:"24/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/501/520298.png?updated=1770886293"},
+  {name:"Capone Bege",   role:"DPS",     date:"29/05", color:"orange",    img:"https://www.spriters-resource.com/media/asset_icons/501/520298.png?updated=1770886293"},
   {name:"Carrot",        role:"DPS",     date:"08/05", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/532/552786.png?updated=1778390441"},
-  {name:"Chopper",       role:"Support", date:"17/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/461/478240.png?updated=1757553496"},
-  {name:"Crocodile",     role:"Tank",    date:"27/03", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/213/216563.png?updated=1767301097"},
-  {name:"Dalmatian",     role:"Bruiser", date:"13/03", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/260/262926.png?updated=1769362284"},
-  {name:"Drake",         role:"Bruiser", date:"03/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/213/216441.png?updated=1767165805"},
-  {name:"Franky",        role:"Bruiser", date:"08/05", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/260/263134.png?updated=1769815824"},
-  {name:"Hina",          role:"Bruiser", date:"10/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/213/216299.png?updated=1766864993"},
-  {name:"Ichiji",        role:"Bruiser", date:"01/05", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/273/276099.png?updated=1755495402"},
-  {name:"Jabra",         role:"DPS",     date:"17/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/260/262854.png?updated=1769069539"},
+  {name:"Chopper",       role:"Support", date:"03/07", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/461/478240.png?updated=1757553496"},
+  {name:"Crocodile",     role:"Tank",    date:"29/05", color:"orange",    img:"https://www.spriters-resource.com/media/asset_icons/213/216563.png?updated=1767301097"},
+  {name:"Dalmatian",     role:"Bruiser", date:"26/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/260/262926.png?updated=1769362284"},
+  {name:"Drake",         role:"Bruiser", date:"29/05", color:"orange",    img:"https://www.spriters-resource.com/media/asset_icons/213/216441.png?updated=1767165805"},
+  {name:"Franky",        role:"Bruiser", date:"10/07", color:"green",    img:"https://www.spriters-resource.com/media/asset_icons/260/263134.png?updated=1769815824"},
+  {name:"Hina",          role:"Bruiser", date:"12/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/213/216299.png?updated=1766864993"},
+  {name:"Ichiji",        role:"Bruiser", date:"03/07", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/273/276099.png?updated=1755495402"},
+  {name:"Jabra",         role:"DPS",     date:"26/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/260/262854.png?updated=1769069539"},
 
   {name:"Kaku",          role:"DPS",     date:"15/05", color:"green",  img:"https://www.spriters-resource.com/media/asset_icons/260/262873.png?updated=1769135984"},
-  {name:"Kalifa",        role:"Support", date:"08/05", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/260/262851.png?updated=1769068804"},
-  {name:"Kid",           role:"Tank",    date:"08/05", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/260/263205.png?updated=1770003392"},
-  {name:"Killer",        role:"DPS",     date:"22/05", color:"orange", img:"https://www.spriters-resource.com/media/asset_icons/213/216162.png?updated=1766999962"},
-  {name:"Koala",         role:"DPS",     date:"10/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/260/262789.png?updated=1768545167"},
-  {name:"Law",           role:"DPS",     date:"03/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/213/216150.png?updated=1766998779"},
-  {name:"Leo",           role:"Support", date:"24/04", color:"green",  img:"https://maniackrackjack.github.io/labophase/sprites/characters/leo_mansherry.png"},
-  {name:"Lucci",         role:"DPS",     date:"15/05", color:"green",  img:"https://www.spriters-resource.com/media/asset_icons/260/262749.png?updated=1768088946"},
-  {name:"Luffy",         role:"Bruiser", date:"15/05", color:"green",  img:"https://www.spriters-resource.com/media/asset_icons/75/78610.png?updated=1765925909"},
-  {name:"Marco",         role:"Support", date:"17/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/277/280452.png?updated=1755495907"},
+  {name:"Kalifa",        role:"Support", date:"10/07", color:"green",    img:"https://www.spriters-resource.com/media/asset_icons/260/262851.png?updated=1769068804"},
+  {name:"Kid",           role:"Tank",    date:"10/07", color:"green",    img:"https://www.spriters-resource.com/media/asset_icons/260/263205.png?updated=1770003392"},
+  {name:"Killer",        role:"DPS",     date:"03/07", color:"yellow", img:"https://www.spriters-resource.com/media/asset_icons/213/216162.png?updated=1766999962"},
+  {name:"Koala",         role:"DPS",     date:"05/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/260/262789.png?updated=1768545167"},
+  {name:"Law",           role:"DPS",     date:"26/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/213/216150.png?updated=1766998779"},
+  {name:"Leo",           role:"Support", date:"05/06", color:"yellow",,  img:"https://maniackrackjack.github.io/labophase/sprites/characters/leo_mansherry.png"},
+  {name:"Lucci",         role:"DPS",     date:"10/07", color:"green",  img:"https://www.spriters-resource.com/media/asset_icons/260/262749.png?updated=1768088946"},
+  {name:"Luffy",         role:"Bruiser", date:"03/07", color:"yellow",  img:"https://www.spriters-resource.com/media/asset_icons/75/78610.png?updated=1765925909"},
+  {name:"Marco",         role:"Support", date:"05/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/277/280452.png?updated=1755495907"},
 
-  {name:"Marguerite",    role:"DPS",     date:"01/05", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/260/263152.png?updated=1769884537"},
-  {name:"Moria",         role:"Support", date:"15/05", color:"green",  img:"https://www.spriters-resource.com/media/asset_icons/213/216597.png?updated=1767395869"},
-  {name:"Nami",          role:"DPS",     date:"03/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/76/78931.png?updated=1765940372"},
-  {name:"Niji",          role:"DPS",     date:"20/03", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/276/279241.png?updated=1755495835"},
-  {name:"Perona",        role:"Support", date:"27/03", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/213/216145.png?updated=1767229989"},
-  {name:"Rebecca",       role:"Tank",    date:"24/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/260/262936.png?updated=1769368727"},
-  {name:"Reiju",         role:"Support", date:"17/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/265/267867.png?updated=1755494730"},
-  {name:"Robin",         role:"DPS",     date:"24/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/229/232020.png?updated=1767859927"},
-  {name:"Ryuma",         role:"DPS",     date:"20/03", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/213/216607.png?updated=1767448154"},
+  {name:"Marguerite",    role:"DPS",     date:"12/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/260/263152.png?updated=1769884537"},
+  {name:"Moria",         role:"Support", date:"10/07", color:"green",  img:"https://www.spriters-resource.com/media/asset_icons/213/216597.png?updated=1767395869"},
+  {name:"Nami",          role:"DPS",     date:"29/05", color:"orange",    img:"https://www.spriters-resource.com/media/asset_icons/76/78931.png?updated=1765940372"},
+  {name:"Niji",          role:"DPS",     date:"19/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/276/279241.png?updated=1755495835"},
+  {name:"Perona",        role:"Support", date:"05/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/213/216145.png?updated=1767229989"},
+  {name:"Rebecca",       role:"Tank",    date:"03/07", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/260/262936.png?updated=1769368727"},
+  {name:"Reiju",         role:"Support", date:"26/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/265/267867.png?updated=1755494730"},
+  {name:"Robin",         role:"DPS",     date:"12/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/229/232020.png?updated=1767859927"},
+  {name:"Ryuma",         role:"DPS",     date:"26/06", color:"yellow",   img:"https://www.spriters-resource.com/media/asset_icons/213/216607.png?updated=1767448154"},
   {name:"Sanji",         role:"DPS",     date:"22/05", color:"orange", img:"https://www.spriters-resource.com/media/asset_icons/216/219362.png?updated=1766021040"},
 
-  {name:"Smoker",        role:"Tank",    date:"08/05", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/260/262962.png?updated=1769454843"},
+  {name:"Smoker",        role:"Tank",    date:"10/07", color:"green",    img:"https://www.spriters-resource.com/media/asset_icons/260/262962.png?updated=1769454843"},
   {name:"Urouge",        role:"Tank",    date:"22/05", color:"orange", img:"https://www.spriters-resource.com/media/asset_icons/76/78661.png?updated=1767000631"},
-  {name:"Usopp",         role:"DPS",     date:"27/03", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/216/219392.png?updated=1765949368"},
-  {name:"Uta",           role:"DPS",     date:"20/03", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/228/231468.png?updated=1755490988"},
-  {name:"Van Augur",     role:"DPS",     date:"24/04", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/275/278516.png?updated=1773523889"},
-  {name:"Yonji",         role:"Tank",    date:"01/05", color:"red",    img:"https://www.spriters-resource.com/media/asset_icons/276/279236.png?updated=1755495835"},
-  {name:"Zoro",          role:"Bruiser", date:"15/05", color:"green",  img:"https://www.spriters-resource.com/media/asset_icons/75/78625.png?updated=1765937815"},
+  {name:"Usopp",         role:"DPS",     date:"05/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/216/219392.png?updated=1765949368"},
+  {name:"Uta",           role:"DPS",     date:"12/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/228/231468.png?updated=1755490988"},
+  {name:"Van Augur",     role:"DPS",     date:"19/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/275/278516.png?updated=1773523889"},
+  {name:"Yonji",         role:"Tank",    date:"12/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/276/279236.png?updated=1755495835"},
+  {name:"Zoro",          role:"Bruiser", date:"26/06", color:"yellow",  img:"https://www.spriters-resource.com/media/asset_icons/75/78625.png?updated=1765937815"},
 ];
 
 /* =================================================================
@@ -427,8 +417,18 @@ function avatarHTML(c){
   return initials(c.name);
 }
 
-function renderWeekCards(container, list){
+function findCharacter(name){
+  const found = CHARACTERS.find(c => c.name === name);
+  if(!found){
+    console.warn(`Personagem "${name}" não encontrado em CHARACTERS. Confira a grafia.`);
+    return {name, img:""};
+  }
+  return found;
+}
+
+function renderWeekCards(container, names){
   container.innerHTML = "";
+  const list = names.map(findCharacter);
   const bau1 = list.slice(0,3);
   const bau2 = list.slice(3,6);
   [["Baú 1",bau1],["Baú 2",bau2]].forEach(([label, group])=>{
