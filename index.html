@@ -323,8 +323,12 @@
         - O Baú reseta toda SEXTA-FEIRA (ver WEEK_RESET_DAY logo
           abaixo, caso isso mude no futuro). Quem está na lista
           CURRENT_WEEK fica VERDE automaticamente, com a data da
-          última sexta-feira — não importa em que dia da semana você
-          realmente editou o código.
+          sexta-feira MAIS PRÓXIMA de hoje — seja ela a que já
+          passou (se hoje for sáb/dom/seg) ou a que ainda vai
+          acontecer (se hoje for ter/qua/qui). Assim, se você
+          atualiza a lista com antecedência (ex: numa quinta,
+          preparando a rotação de sexta), o card já mostra a data
+          certa (a sexta de amanhã), sem esperar o dia virar.
         - Quando você TIRA alguém da lista CURRENT_WEEK, o sistema já
           guarda sozinho (no navegador) a data em que isso aconteceu.
           Você NÃO precisa mais editar o campo "date" na mão. A partir
@@ -470,14 +474,26 @@ const SYSTEM_TODAY = getSystemToday();
 // Dia da semana em que o Baú reseta. 0=domingo, 1=segunda, ... 5=sexta, 6=sábado.
 const WEEK_RESET_DAY = 5; // sexta-feira
 
-// Retorna a data da última sexta-feira (ou a própria data, se hoje já
-// for sexta). É essa data — e não o dia exato em que você mexeu no
-// código — que representa "quando a rotação atual começou".
+// Retorna a data da sexta-feira MAIS PRÓXIMA de hoje — podendo ser
+// uma sexta que já passou (se hoje for sáb/dom/seg) ou uma sexta que
+// ainda vai acontecer (se hoje for ter/qua/qui). Isso permite que,
+// ao editar a lista CURRENT_WEEK com antecedência (ex: numa quinta,
+// preparando a rotação que estreia sexta), o card já mostre a data
+// certa (a sexta de amanhã) em vez de mostrar a sexta da semana
+// passada, que já não representa a rotação atual.
+// Empates (ex: segunda, que fica a 3 dias da sexta passada e a 4 da
+// próxima) resolvem para trás, mantendo a semana em curso.
 function getLastResetDate(d){
   const weekday = d.getDay();
-  const diff = (weekday - WEEK_RESET_DAY + 7) % 7;
+  const diffBack = (weekday - WEEK_RESET_DAY + 7) % 7; // dias desde a última sexta
   const result = new Date(d);
-  result.setDate(d.getDate() - diff);
+  if(diffBack <= 3){
+    // sexta mais próxima já passou (ou é hoje) -> usa ela
+    result.setDate(d.getDate() - diffBack);
+  } else {
+    // sexta mais próxima ainda vai acontecer -> usa a próxima
+    result.setDate(d.getDate() + (7 - diffBack));
+  }
   return result;
 }
 
@@ -524,10 +540,10 @@ function saveRotationLog(log){
 }
 
 // Atualiza o log: todo nome presente em CURRENT_WEEK hoje recebe a
-// data de hoje como "última vez visto na rotação". Quem sai da lista
-// simplesmente para de ser atualizado, então fica congelado na
-// última data em que esteve lá — exatamente o que precisamos para
-// contar os dias corretamente.
+// data da rotação atual (CURRENT_ROTATION_DATE) como "última vez
+// visto na rotação". Quem sai da lista simplesmente para de ser
+// atualizado, então fica congelado na última data em que esteve lá —
+// exatamente o que precisamos para contar os dias corretamente.
 function updateRotationLog(){
   const log = loadRotationLog();
   const resetStr = formatDDMM(CURRENT_ROTATION_DATE);
