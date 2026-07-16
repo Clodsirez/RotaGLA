@@ -332,8 +332,9 @@
         - Quando você TIRA alguém da lista CURRENT_WEEK, o sistema já
           guarda sozinho (no navegador) a data em que isso aconteceu.
           Você NÃO precisa mais editar o campo "date" na mão. A partir
-          daí a cor dele muda sozinha conforme os dias passam:
-            8 a 30 dias  -> amarelo (até 1 mês)
+          dali a cor dele muda sozinha conforme os dias passam:
+            0 a 30 dias  -> amarelo (até 1 mês) — já entra amarelo
+                            assim que sai da rotação atual
             31 a 60 dias -> laranja (1 a 2 meses)
             61+ dias     -> vermelho (mais de 2 meses)
         - Casos manuais (não calculados, defina "color" no personagem):
@@ -588,6 +589,14 @@ function daysSinceRotation(dateStr, todayDate){
 
 // Calcula a cor automaticamente. "blue" e "purple" continuam manuais
 // pois representam estados que não têm relação com contagem de dias.
+//
+// CORREÇÃO: antes havia um degrau extra "days <= 7 -> green" que
+// fazia quem tinha ACABADO de sair do CURRENT_WEEK continuar
+// aparecendo verde por mais uma semana inteira (porque a data
+// congelada no log ficava a exatos 7 dias de hoje na virada da
+// semana). Verde agora é exclusividade de quem está de fato no
+// CURRENT_WEEK_SET; qualquer um que saiu da rotação já entra em
+// amarelo imediatamente e sobe de faixa conforme os dias passam.
 function getAutoColor(c, todayDate){
   if(CURRENT_WEEK_SET.has(c.name)) return "green"; // está na rotação desta semana
   if(c.color === "blue") return "blue";
@@ -597,8 +606,7 @@ function getAutoColor(c, todayDate){
   const days = daysSinceRotation(effDate, todayDate);
   if(days === null) return "purple";
   if(days < 0) return "green";      // data agendada para o futuro (rotação já definida)
-  if(days <= 7) return "green";     // semana atual
-  if(days <= 30) return "yellow";   // até 1 mês
+  if(days <= 30) return "yellow";   // saiu da rotação até 1 mês atrás
   if(days <= 60) return "orange";   // 1 a 2 meses
   return "red";                     // mais de 2 meses
 }
