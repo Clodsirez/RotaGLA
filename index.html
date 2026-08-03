@@ -118,45 +118,27 @@
     margin-bottom: 14px;
   }
 
-  .bau-row{
-    display:grid;
-    grid-template-columns: 70px repeat(3, 1fr);
-    align-items:center;
-    gap: 10px;
-    margin-bottom: 14px;
-  }
   .bau-row.special-row{
     display:flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 18px;
   }
-  .bau-row:last-child{ margin-bottom: 0; }
+  .bau-group{ margin-bottom: 18px; }
+  .bau-group:last-child{ margin-bottom: 0; }
+
+  .week-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
   .bau-label{
     color: var(--gold);
     font-weight: 600;
     font-size: .95rem;
+    margin-bottom: 8px;
   }
-
-  .chest-card{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap: 6px;
-  }
-  .avatar{
-    width: 74px; height: 74px;
-    border-radius: 8px;
-    border: 2px solid;
-    display:flex; align-items:center; justify-content:center;
-    font-weight:700; font-size:1.3rem;
-    background: linear-gradient(160deg,#3a3440,#211f26);
-    overflow: hidden;
-  }
-  .week-panel.current .avatar{ border-color: var(--green); }
-  .week-panel.next .avatar{ border-color: var(--yellow); }
-  .week-panel.special .avatar{ border-color: var(--pink); }
-  .chest-card .name{ font-size: .85rem; color: var(--text); }
 
   .controls{
     display:flex;
@@ -737,46 +719,58 @@ function findCharacter(name){
   return found;
 }
 
-function renderWeekCards(container, names){
+function renderWeekCards(container, names, dateLabel, statusClass){
   container.innerHTML = "";
   const list = names.map(findCharacter);
   const bau1 = list.slice(0,3);
   const bau2 = list.slice(3,6);
   [["Baú 1",bau1],["Baú 2",bau2]].forEach(([label, group])=>{
-    const row = document.createElement("div");
-    row.className = "bau-row";
+    const wrap = document.createElement("div");
+    wrap.className = "bau-group";
     const lbl = document.createElement("div");
     lbl.className = "bau-label";
     lbl.textContent = label;
-    row.appendChild(lbl);
+    wrap.appendChild(lbl);
+    const row = document.createElement("div");
+    row.className = "grid week-grid";
     group.forEach(c=>{
       const card = document.createElement("div");
-      card.className = "chest-card";
-      card.innerHTML = `<div class="avatar">${avatarHTML(c)}</div><div class="name">${c.name}</div>`;
+      card.className = `card status-${statusClass}`;
+      card.innerHTML = `
+        <div class="img">${avatarHTML(c)}</div>
+        <div class="date-bar">${dateLabel}</div>
+        <div class="cname">${c.name}</div>
+      `;
       row.appendChild(card);
     });
-    container.appendChild(row);
+    wrap.appendChild(row);
+    container.appendChild(wrap);
   });
 }
 
-renderWeekCards(document.getElementById("current-week"), CURRENT_WEEK);
-renderWeekCards(document.getElementById("next-week"), NEXT_WEEK);
+renderWeekCards(document.getElementById("current-week"), CURRENT_WEEK, formatDDMM(CURRENT_ROTATION_DATE), "green");
+renderWeekCards(document.getElementById("next-week"), NEXT_WEEK, formatDDMM(NEXT_ROTATION_DATE), "yellow");
 
 // Mostra a data de cada painel logo abaixo do título ("SEMANA ATUAL"
 // e "PRÓXIMA SEMANA"), não em cada carta individual.
 document.getElementById("current-week-date").textContent = formatDDMM(CURRENT_ROTATION_DATE);
 document.getElementById("next-week-date").textContent = formatDDMM(NEXT_ROTATION_DATE);
 
-// Renderiza o Baú Especial (número de nomes livre, sem dividir em
-// Baú 1 / Baú 2). O painel inteiro só aparece se SPECIAL_ACTIVE.
+// Renderiza o Baú Especial usando o mesmo estilo grande das cartas
+// do grid principal (com barra de data colorida), em vez do estilo
+// pequeno usado na Semana Atual/Próxima Semana.
 function renderSpecialCards(container, names){
   container.innerHTML = "";
   const row = document.createElement("div");
-  row.className = "bau-row special-row";
+  row.className = "grid special-grid";
   names.map(findCharacter).forEach(c=>{
     const card = document.createElement("div");
-    card.className = "chest-card";
-    card.innerHTML = `<div class="avatar">${avatarHTML(c)}</div><div class="name">${c.name}</div>`;
+    card.className = "card status-green";
+    card.innerHTML = `
+      <div class="img">${avatarHTML(c)}</div>
+      <div class="date-bar">até ${formatDDMM(SPECIAL_END_DATE)}</div>
+      <div class="cname">${c.name}</div>
+    `;
     row.appendChild(card);
   });
   container.appendChild(row);
