@@ -103,11 +103,18 @@
     text-align:center;
     font-weight: 700;
     letter-spacing: 1px;
-    margin-bottom: 16px;
+    margin-bottom: 4px;
     font-size: 1.05rem;
   }
   .week-panel.current .week-title{ color: var(--green); }
   .week-panel.next .week-title{ color: var(--yellow); }
+
+  .week-date{
+    text-align:center;
+    font-size: .85rem;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
 
   .bau-row{
     display:grid;
@@ -265,10 +272,12 @@
   <div class="weeks">
     <div class="week-panel current">
       <div class="week-title">SEMANA ATUAL</div>
+      <div class="week-date" id="current-week-date"></div>
       <div id="current-week"></div>
     </div>
     <div class="week-panel next">
       <div class="week-title">PRÓXIMA SEMANA</div>
+      <div class="week-date" id="next-week-date"></div>
       <div id="next-week"></div>
     </div>
   </div>
@@ -318,6 +327,13 @@
    de novo. O campo "color" antigo continua existindo no array, mas
    agora só é usado para os dois casos especiais que não dependem de
    data (veja o item 1).
+
+   NOVIDADE 2: agora tanto o painel "SEMANA ATUAL" quanto o painel
+   "PRÓXIMA SEMANA" mostram uma data logo abaixo do título (a sexta-
+   feira correspondente a cada rotação). A "PRÓXIMA SEMANA" sempre
+   mostra a sexta seguinte à da semana atual. Isso é só um indicador
+   visual para você conferir rapidinho, na segunda-feira, se editou
+   as listas certas — não precisa digitar nada a mais.
 
    1) COMO FUNCIONA A COR AGORA (100% AUTOMÁTICO):
         - O Baú reseta toda SEXTA-FEIRA (ver WEEK_RESET_DAY logo
@@ -500,9 +516,21 @@ function getLastResetDate(d){
 
 const CURRENT_ROTATION_DATE = getLastResetDate(SYSTEM_TODAY);
 
+// Data da rotação da PRÓXIMA semana: sempre 7 dias depois da atual.
+// Serve só para mostrar no painel "PRÓXIMA SEMANA", como referência
+// visual de conferência (ex: na segunda-feira, você vê se a data
+// bate com a sexta que vem).
+const NEXT_ROTATION_DATE = new Date(CURRENT_ROTATION_DATE);
+NEXT_ROTATION_DATE.setDate(CURRENT_ROTATION_DATE.getDate() + 7);
+
 // Nomes que estão na rotação desta semana (usado para forçar a cor
 // verde automaticamente, sem precisar editar o campo "date").
 const CURRENT_WEEK_SET = new Set(CURRENT_WEEK);
+
+// Nomes que já estão definidos para a PRÓXIMA rotação. Eles também
+// aparecem verdes no grid principal (como "já garantidos"), mas com
+// a data da próxima sexta em vez da atual.
+const NEXT_WEEK_SET = new Set(NEXT_WEEK);
 
 // Formata a data de hoje como "DD/MM" para exibir no card de quem
 // está na rotação atual (mesmo que o campo "date" salvo esteja
@@ -599,6 +627,7 @@ function daysSinceRotation(dateStr, todayDate){
 // amarelo imediatamente e sobe de faixa conforme os dias passam.
 function getAutoColor(c, todayDate){
   if(CURRENT_WEEK_SET.has(c.name)) return "green"; // está na rotação desta semana
+  if(NEXT_WEEK_SET.has(c.name)) return "green";    // já está definido para a próxima rotação
   if(c.color === "blue") return "blue";
   const effDate = getEffectiveDate(c);
   if(!effDate || c.color === "purple") return "purple";
@@ -620,6 +649,16 @@ function avatarHTML(c){
     return `<img src="${c.img}" alt="${c.name}" loading="lazy" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentElement.textContent='${initials(c.name)}';">`;
   }
   return initials(c.name);
+}
+
+// Data "efetiva" de um personagem, como objeto Date real, considerando
+// as sobreposições de semana atual/próxima semana. Usada tanto para
+// exibir o rótulo no grid quanto para ordenar por data — assim os dois
+// ficam sempre consistentes entre si.
+function getEffectiveDateObj(c){
+  if(CURRENT_WEEK_SET.has(c.name)) return CURRENT_ROTATION_DATE;
+  if(NEXT_WEEK_SET.has(c.name)) return NEXT_ROTATION_DATE;
+  return parseRotationDate(getEffectiveDate(c), SYSTEM_TODAY);
 }
 
 function findCharacter(name){
@@ -656,6 +695,11 @@ function renderWeekCards(container, names){
 renderWeekCards(document.getElementById("current-week"), CURRENT_WEEK);
 renderWeekCards(document.getElementById("next-week"), NEXT_WEEK);
 
+// Mostra a data de cada painel logo abaixo do título ("SEMANA ATUAL"
+// e "PRÓXIMA SEMANA"), não em cada carta individual.
+document.getElementById("current-week-date").textContent = formatDDMM(CURRENT_ROTATION_DATE);
+document.getElementById("next-week-date").textContent = formatDDMM(NEXT_ROTATION_DATE);
+
 // ---------------- Grid principal ----------------
 let activeRoles = new Set();
 const searchInput = document.getElementById("search");
@@ -680,11 +724,10 @@ searchInput.addEventListener("input", renderGrid);
 sortSelect.addEventListener("change", renderGrid);
 hideNone.addEventListener("change", renderGrid);
 
-// helper pra ordenar por data no formato "DD/MM", usando o mesmo
-// calendário do sistema (SYSTEM_TODAY) para resolver o ano corretamente
-function parseDMY(d){
-  const parsed = parseRotationDate(d, SYSTEM_TODAY);
-  return parsed || new Date(0);
+// helper pra ordenar por data, usando a data efetiva unificada
+// (já considera semana atual/próxima semana)
+function parseDMY(c){
+  return getEffectiveDateObj(c) || new Date(0);
 }
 
 function renderGrid(){
@@ -707,8 +750,8 @@ function renderGrid(){
   list.sort((a,b)=>{
     if(sortVal === "name-asc") return a.name.localeCompare(b.name);
     if(sortVal === "name-desc") return b.name.localeCompare(a.name);
-    if(sortVal === "date-asc") return parseDMY(getEffectiveDate(a)) - parseDMY(getEffectiveDate(b));
-    if(sortVal === "date-desc") return parseDMY(getEffectiveDate(b)) - parseDMY(getEffectiveDate(a));
+    if(sortVal === "date-asc") return parseDMY(a) - parseDMY(b);
+    if(sortVal === "date-desc") return parseDMY(b) - parseDMY(a);
     return 0;
   });
 
@@ -724,8 +767,7 @@ function renderGrid(){
     card.className = `card status-${color}`;
     const dateLabel = color === "blue" ? "Fixo"
       : color === "purple" ? "—"
-      : CURRENT_WEEK_SET.has(c.name) ? formatDDMM(CURRENT_ROTATION_DATE)
-      : (getEffectiveDate(c) || "—");
+      : formatDDMM(getEffectiveDateObj(c));
     card.innerHTML = `
       <div class="img">${avatarHTML(c)}</div>
       <div class="date-bar">${dateLabel}</div>
