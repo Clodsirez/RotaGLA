@@ -98,6 +98,7 @@
   }
   .week-panel.current{ border-color: var(--green); }
   .week-panel.next{ border-color: var(--yellow); }
+  .week-panel.special{ border-color: var(--pink); grid-column: 1 / -1; }
 
   .week-title{
     text-align:center;
@@ -108,6 +109,7 @@
   }
   .week-panel.current .week-title{ color: var(--green); }
   .week-panel.next .week-title{ color: var(--yellow); }
+  .week-panel.special .week-title{ color: var(--pink); }
 
   .week-date{
     text-align:center;
@@ -122,6 +124,12 @@
     align-items:center;
     gap: 10px;
     margin-bottom: 14px;
+  }
+  .bau-row.special-row{
+    display:flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 18px;
   }
   .bau-row:last-child{ margin-bottom: 0; }
   .bau-label{
@@ -147,6 +155,7 @@
   }
   .week-panel.current .avatar{ border-color: var(--green); }
   .week-panel.next .avatar{ border-color: var(--yellow); }
+  .week-panel.special .avatar{ border-color: var(--pink); }
   .chest-card .name{ font-size: .85rem; color: var(--text); }
 
   .controls{
@@ -280,6 +289,11 @@
       <div class="week-date" id="next-week-date"></div>
       <div id="next-week"></div>
     </div>
+    <div class="week-panel special" id="special-week-panel" style="display:none;">
+      <div class="week-title">BAÚ ESPECIAL</div>
+      <div class="week-date" id="special-week-date"></div>
+      <div id="special-week"></div>
+    </div>
   </div>
 
   <div class="controls">
@@ -410,6 +424,25 @@ const CURRENT_WEEK = ["Sanji", "Burgess", "Blueno", "Brook", "Urouge", "Baby 5"]
 // ---------- PRÓXIMA SEMANA (6 nomes = Baú 1 + Baú 2) ----------
 const NEXT_WEEK = ["Leo", "Hina", "Chopper", "Yonji", "Rebecca", "Dalmatian"];
 
+// ---------- BAÚ ESPECIAL (opcional — lançamentos, eventos, etc) ----------
+// Use isso só quando tiver um personagem "extra" que fica disponível
+// além da rotação normal (ex: lançamento de personagem novo), sem
+// depender do calendário de sexta-feira. Pode colocar 1, 2, 3... ou
+// quantos nomes quiser, não precisa ser 6.
+//
+// SPECIAL_START = data em que o baú especial começou, formato "DD/MM".
+// O sistema conta sozinho 2 SEMANAS a partir dessa data. Enquanto
+// durar, o(s) personagem(ns) ficam verdes e o painel "BAÚ ESPECIAL"
+// aparece na tela. Quando as 2 semanas passarem, o painel some
+// sozinho e o personagem volta a envelhecer normal (amarelo -> laranja
+// -> vermelho), contando a partir da mesma data de início.
+//
+// Quer desligar o baú especial ANTES das 2 semanas acabarem? É só
+// deixar SPECIAL_WEEK como uma lista vazia: [] — o painel some na
+// hora, sem precisar editar mais nada.
+const SPECIAL_WEEK = ["Yamato"];
+const SPECIAL_START = "07/08";
+
 // ---------- LISTA COMPLETA DE PERSONAGENS ----------
 const CHARACTERS = [
   {name:"Apoo",          role:"Support", date:"29/05", color:"orange",    img:"https://www.spriters-resource.com/media/asset_icons/493/513822.png?updated=1769657444"},
@@ -462,6 +495,7 @@ const CHARACTERS = [
   {name:"Uta",           role:"DPS",     date:"12/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/228/231468.png?updated=1755490988"},
   {name:"Van Augur",     role:"DPS",     date:"19/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/275/278516.png?updated=1773523889"},
   {name:"Yonji",         role:"Tank",    date:"12/06", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/276/279236.png?updated=1755495835"},
+  {name:"Yamato",        role:"DPS",     date:"07/08", color:"yellow",    img:"https://www.spriters-resource.com/media/asset_icons/278/280848.png?updated=1755495928"},
   {name:"Zoro",          role:"Bruiser", date:"26/06", color:"yellow",  img:"https://www.spriters-resource.com/media/asset_icons/75/78625.png?updated=1765937815"},
 ];
 
@@ -615,6 +649,37 @@ function daysSinceRotation(dateStr, todayDate){
   return Math.floor((todayDate - d) / 86400000);
 }
 
+// =================================================================
+// =====================  BAÚ ESPECIAL (2 semanas)  ================
+// =================================================================
+const SPECIAL_DURATION_DAYS = 14; // 2 semanas
+
+// Data de início do baú especial, como objeto Date real.
+const SPECIAL_START_DATE = parseRotationDate(SPECIAL_START, SYSTEM_TODAY);
+
+// Quantos dias já se passaram desde o início.
+const SPECIAL_DAYS_ELAPSED = SPECIAL_START_DATE
+  ? Math.floor((SYSTEM_TODAY - SPECIAL_START_DATE) / 86400000)
+  : null;
+
+// Só fica "ativo" se: tiver nomes na lista, tiver data de início
+// válida, e ainda estiver dentro da janela de 2 semanas (contando a
+// partir do início — inclusive se o início ainda for daqui a alguns
+// dias, igual ao padrão usado na Semana Atual/Próxima Semana).
+const SPECIAL_ACTIVE = SPECIAL_WEEK.length > 0
+  && SPECIAL_DAYS_ELAPSED !== null
+  && SPECIAL_DAYS_ELAPSED < SPECIAL_DURATION_DAYS;
+
+// Conjunto de nomes do baú especial — só populado enquanto ativo.
+// Depois que expira (ou se você limpar a lista), fica vazio sozinho
+// e os personagens voltam a ser tratados normalmente.
+const SPECIAL_WEEK_SET = SPECIAL_ACTIVE ? new Set(SPECIAL_WEEK) : new Set();
+
+// Data em que o baú especial termina (início + 13 dias = 2 semanas).
+const SPECIAL_END_DATE = SPECIAL_START_DATE
+  ? (()=>{ const d = new Date(SPECIAL_START_DATE); d.setDate(d.getDate() + SPECIAL_DURATION_DAYS - 1); return d; })()
+  : null;
+
 // Calcula a cor automaticamente. "blue" e "purple" continuam manuais
 // pois representam estados que não têm relação com contagem de dias.
 //
@@ -628,6 +693,7 @@ function daysSinceRotation(dateStr, todayDate){
 function getAutoColor(c, todayDate){
   if(CURRENT_WEEK_SET.has(c.name)) return "green"; // está na rotação desta semana
   if(NEXT_WEEK_SET.has(c.name)) return "green";    // já está definido para a próxima rotação
+  if(SPECIAL_WEEK_SET.has(c.name)) return "green"; // baú especial ativo
   if(c.color === "blue") return "blue";
   const effDate = getEffectiveDate(c);
   if(!effDate || c.color === "purple") return "purple";
@@ -658,6 +724,7 @@ function avatarHTML(c){
 function getEffectiveDateObj(c){
   if(CURRENT_WEEK_SET.has(c.name)) return CURRENT_ROTATION_DATE;
   if(NEXT_WEEK_SET.has(c.name)) return NEXT_ROTATION_DATE;
+  if(SPECIAL_WEEK_SET.has(c.name)) return SPECIAL_END_DATE;
   return parseRotationDate(getEffectiveDate(c), SYSTEM_TODAY);
 }
 
@@ -699,6 +766,30 @@ renderWeekCards(document.getElementById("next-week"), NEXT_WEEK);
 // e "PRÓXIMA SEMANA"), não em cada carta individual.
 document.getElementById("current-week-date").textContent = formatDDMM(CURRENT_ROTATION_DATE);
 document.getElementById("next-week-date").textContent = formatDDMM(NEXT_ROTATION_DATE);
+
+// Renderiza o Baú Especial (número de nomes livre, sem dividir em
+// Baú 1 / Baú 2). O painel inteiro só aparece se SPECIAL_ACTIVE.
+function renderSpecialCards(container, names){
+  container.innerHTML = "";
+  const row = document.createElement("div");
+  row.className = "bau-row special-row";
+  names.map(findCharacter).forEach(c=>{
+    const card = document.createElement("div");
+    card.className = "chest-card";
+    card.innerHTML = `<div class="avatar">${avatarHTML(c)}</div><div class="name">${c.name}</div>`;
+    row.appendChild(card);
+  });
+  container.appendChild(row);
+}
+
+const specialPanel = document.getElementById("special-week-panel");
+if(SPECIAL_ACTIVE){
+  specialPanel.style.display = "";
+  renderSpecialCards(document.getElementById("special-week"), SPECIAL_WEEK);
+  document.getElementById("special-week-date").textContent = "até " + formatDDMM(SPECIAL_END_DATE);
+} else {
+  specialPanel.style.display = "none";
+}
 
 // ---------------- Grid principal ----------------
 let activeRoles = new Set();
